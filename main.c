@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include "cbmp.h"
 
+int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS]);
+void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS]);
+int erosions = 0;
+int *ptr = &erosions;
+
 //Function to invert pixels of an image (negative)
 void toGreyScale(unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS], unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
 {
@@ -34,19 +39,162 @@ void binaryThreshold(unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANN
   {
     for (int y = 0; y < BMP_HEIGTH; y++)
     {
-      for (int c = 0; c < BMP_CHANNELS; c++)
+      if (output_image[x][y][0] <= Th)
       {
-        if (output_image[x][y][c] <= Th)
+        output_image[x][y][0] = 0;
+        output_image[x][y][1] = 0;
+        output_image[x][y][2] = 0;
+      }
+      else
+      {
+        output_image[x][y][0] = 255;
+        output_image[x][y][1] = 255;
+        output_image[x][y][2] = 255;
+      }
+    }
+  }
+}
+
+void erosion(int *erosions, unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS], unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
+{
+
+ 
+
+  int eroded = 0;
+
+  for (int x = 0; x < BMP_WIDTH; x++)
+  {
+    for (int y = 0; y < BMP_HEIGTH; y++)
+    {
+      if (output_image[x][y][0] > 0)
+      {
+        for (int i = -1; i < 2; i++)
         {
-          output_image[x][y][0] = 0;
-          output_image[x][y][1] = 0;
-          output_image[x][y][2] = 0;
+          if (x + i >= 0 && x + i < BMP_WIDTH)
+          {
+            if (output_image[x + i][y][0] == 0)
+            {
+              eroded = 1;
+              break;
+            }
+          }
+          if (y + i >= 0 && y + i < BMP_HEIGTH)
+          {
+            if (output_image[x][y + i][0] == 0)
+            {
+              eroded = 1;
+              break;
+            }
+          }
         }
-        else
+      }
+      if (eroded == 0 && output_image[x][y][0] > 0)
+      {
+
+        eroded_image[x][y][0] = 255;
+        eroded_image[x][y][1] = 255;
+        eroded_image[x][y][2] = 255;
+      }
+      else
+      {
+        eroded_image[x][y][0] = 0;
+        eroded_image[x][y][1] = 0;
+        eroded_image[x][y][2] = 0;
+      }
+      eroded = 0;
+    }
+  }
+
+ for (int x = 0; x < BMP_WIDTH; x++) {
+    for (int y = 0; y < BMP_HEIGTH; y++) {
+      output_image[x][y][0] = eroded_image[x][y][0];
+      output_image[x][y][1] = eroded_image[x][y][1];
+      output_image[x][y][2] = eroded_image[x][y][2];
+    }
+  }
+
+  (*erosions)+1;
+}
+
+int detect(unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
+{
+  int finished = 1;
+
+  for (int x = 0; x < BMP_WIDTH; x++)
+  {
+    for (int y = 0; y < BMP_HEIGTH; y++)
+    {
+      if (eroded_image[x][y][0] > 0)
+      {
+        finished = 0;
+        if (scope(x, y, erosions, eroded_image) == 1)
         {
-          output_image[x][y][0] = 255;
-          output_image[x][y][1] = 255;
-          output_image[x][y][2] = 255;
+          capture(x, y, erosions, eroded_image);
+        }
+      }
+    }
+  }
+  return finished;
+}
+
+int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
+{
+
+  int size = 27 - 2 * erosions;
+  int outOfBounds = 0;
+
+  for (int i = -((size - 1) / 2); i <= (size - 1) / 2; i = i + size - 1)
+  {
+    if (x + i >= 0 && x + i < BMP_WIDTH)
+    {
+      for (int j = -((size - 1) / 2); j <= (size - 1) / 2; j++)
+      {
+        if (y + j >= 0 && y + j < BMP_HEIGTH)
+        {
+          if (eroded_image[x + i][y + j][0] > 0)
+          {
+            return 0;
+          }
+        }
+      }
+    }
+  }
+
+  for (int j = -((size - 1) / 2); j <= (size - 1) / 2; j = j + size - 1)
+  {
+    if (y + j >= 0 && y + j < BMP_HEIGTH)
+    {
+      for (int i = -((size - 1) / 2); i <= (size - 1) / 2; i++)
+      {
+        if (x + i >= 0 && x + i < BMP_WIDTH)
+        {
+          if (eroded_image[x + i][y + j][0] > 0)
+          {
+            return 0;
+          }
+        }
+      }
+    }
+  }
+
+  return 1;
+}
+
+void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
+{
+  int size = 27 - 2 * erosions;
+
+  for (int i = -((size - 1) / 2); i <= (size - 1) / 2; i++)
+  {
+    if (x + i >= 0 && x + i < BMP_WIDTH)
+    {
+      for (int j = -((size - 1) / 2); j <= (size - 1) / 2; j++)
+      {
+        if (y + j >= 0 && y + j < BMP_HEIGTH)
+        {
+          eroded_image[x + i][y + j][0] = 0;
+          eroded_image[x + i][y + j][1] = 0;
+          eroded_image[x + i][y + j][2] = 0;
         }
       }
     }
@@ -56,6 +204,7 @@ void binaryThreshold(unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANN
 //Declaring the array to store the image (unsigned char = unsigned 8 bit)
 unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
+unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 
 //Main function
 int main(int argc, char **argv)
@@ -83,8 +232,16 @@ int main(int argc, char **argv)
   //to two colors
   binaryThreshold(output_image);
 
+  for (int i = 0; i < 2; i++)
+  {
+    erosion(ptr, output_image, eroded_image);
+    detect(output_image);
+  }
+
+printf("%d",*ptr);
+
   //Save image to file
-  write_bitmap(output_image, argv[2]);
+  write_bitmap(eroded_image, argv[2]);
 
   printf("Done!\n");
   return 0;
