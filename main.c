@@ -130,6 +130,7 @@ int detect(unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
         if (scope(x, y, erosions, eroded_image) == 1)
         {
           capture(x, y, erosions, eroded_image);
+          
         }
       }
     }
@@ -141,7 +142,6 @@ int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_
 {
 
   int size = 27 - 2 * erosions;
-  int outOfBounds = 0;
 
   for (int i = -((size - 1) / 2); i <= (size - 1) / 2; i = i + size - 1)
   {
@@ -201,6 +201,21 @@ void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][B
   }
 }
 
+void cross(int x, int y, unsigned char original_picture[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS]){
+  
+  for (int i = -10; i < 10; i++) {
+    for (int j = -1; j < 2; j++) {
+    original_picture[x+j][y+i][255];
+    original_picture[x+j][y+i][0];
+    original_picture[x+j][y+i][0];
+
+    original_picture[x+i][y+j][255];
+    original_picture[x+i][y+j][0];
+    original_picture[x+i][y+j][0];
+    }
+  }
+}
+
 //Declaring the array to store the image (unsigned char = unsigned 8 bit)
 unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
@@ -232,7 +247,7 @@ int main(int argc, char **argv)
   //to two colors
   binaryThreshold(output_image);
 
-  for (int i = 0; i < 2; i++)
+  for (int i = 0; i < 20; i++)
   {
     erosion(ptr, output_image, eroded_image);
     detect(output_image);
