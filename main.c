@@ -269,7 +269,7 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
   int xloc;
   int yloc;
   for (int x = 0; x < (BMP_WIDTH*BMP_HEIGTH); x++){
-      if ((centers_image[x/8] & (1 << (x%8)) != 0) == 1) {
+      if (centers_image[x/8] & (1 << (x%8)) != 0) {
         count++;
         xloc = x%BMP_WIDTH;
         yloc = (x-x%BMP_WIDTH)/BMP_WIDTH;
@@ -280,12 +280,15 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
             original_image[xloc][yloc+i][0] = 255;
             original_image[xloc][yloc+i][1] = 0;
             original_image[xloc][yloc+i][2] = 0;
+            //Den gemmer de samme punkter virkelig mange gange
+            printf("celle: %d %d\n",xloc,yloc);
           }
 
           if (xloc+i >= 0 && xloc+i < BMP_WIDTH) {
           original_image[xloc+i][yloc][0] = 255;
           original_image[xloc+i][yloc][1] = 0;
           original_image[xloc+i][yloc][2] = 0;
+          printf("celle: %d %d\n",xloc,yloc);
           }
 
           }
