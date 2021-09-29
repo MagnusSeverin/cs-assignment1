@@ -150,12 +150,9 @@ int detect(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH],unsigned char erode
         if (scope(x, y, erosions, eroded_image) == 1)
         {
           capture(x, y, erosions, eroded_image);
-          loc = y*BMP_WIDTH + x;
+          loc = (y*BMP_WIDTH) + x;
+          printf("Punkt %d,%d bliver til bit nummer %d\n",x,y,loc);
           centers_image[loc/8] |= (1 << (loc%8));
-        }
-        else {
-          loc = y*BMP_WIDTH + x;
-          centers_image[loc/8] &= ~(1 << (loc%8));
         }
       }
     }
@@ -271,7 +268,7 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
   int count = 0;
   int xloc;
   int yloc;
-  for (int x = 0; x < BMP_WIDTH*BMP_HEIGTH; x++){
+  for (int x = 0; x < (BMP_WIDTH*BMP_HEIGTH); x++){
       if ((centers_image[x/8] & (1 << (x%8)) != 0) == 1) {
         count++;
         xloc = x%BMP_WIDTH;
@@ -294,6 +291,7 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
           }
         }
       }
+      //Det her print stikker helt af
   //printf("%d\n",count);
   }
 }
