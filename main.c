@@ -134,9 +134,11 @@ void erosion(int *erosions, unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP
   (*erosions)+1;
 }
 
-int detect(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH],unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
+int detect(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH],unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
 {
   int finished = 1;
+  int loc;
+
 
   for (int x = 0; x < BMP_WIDTH; x++)
   {
@@ -148,7 +150,12 @@ int detect(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH],unsigned char erod
         if (scope(x, y, erosions, eroded_image) == 1)
         {
           capture(x, y, erosions, eroded_image);
-          centers_image[x][y] = 1;
+          loc = y*BMP_WIDTH + x;
+          centers_image[loc/8] |= (1 << (loc%8));
+        }
+        else {
+          loc = y*BMP_WIDTH + x;
+          centers_image[loc/8] &= ~(1 << (loc%8));
         }
       }
     }
@@ -260,41 +267,42 @@ void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][B
 }
 
 
-void cross(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH], unsigned char original_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS]) {
+void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char original_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS]) {
   int count = 0;
-  for (int x = 0; x < BMP_WIDTH; x++){
-    for (int y = 0; y < BMP_HEIGTH; y++) {
-      if (centers_image[x][y] == 1) {
-        printf("(%d;%d)\n",x,y);
+  int xloc;
+  int yloc;
+  for (int x = 0; x < BMP_WIDTH*BMP_HEIGTH; x++){
+      if ((centers_image[x/8] & (1 << (x%8)) != 0) == 1) {
         count++;
+        xloc = x%BMP_WIDTH;
+        yloc = (x-x%BMP_WIDTH)/BMP_WIDTH;
         for (int i = -10; i < 10; i++) {
           for (int j = -10; j < 11; j++) {
 
-          if (y+i >= 0 && y+i < BMP_HEIGTH) {
-            original_image[x][y+i][0] = 255;
-            original_image[x][y+i][1] = 0;
-            original_image[x][y+i][2] = 0;
+          if (yloc+i >= 0 && yloc+i < BMP_HEIGTH) {
+            original_image[xloc][yloc+i][0] = 255;
+            original_image[xloc][yloc+i][1] = 0;
+            original_image[xloc][yloc+i][2] = 0;
           }
 
-          if (x+i >= 0 && x+i < BMP_WIDTH) {
-          original_image[x+i][y][0] = 255;
-          original_image[x+i][y][1] = 0;
-          original_image[x+i][y][2] = 0;
+          if (xloc+i >= 0 && xloc+i < BMP_WIDTH) {
+          original_image[xloc+i][yloc][0] = 255;
+          original_image[xloc+i][yloc][1] = 0;
+          original_image[xloc+i][yloc][2] = 0;
           }
 
           }
         }
       }
-    }
+  //printf("%d\n",count);
   }
-  printf("%d\n",count);
 }
 
 //Declaring the array to store the image (unsigned char = unsigned 8 bit)
 unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 unsigned char output_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
-unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH];
+unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH];
 
 //Main function
 int main(int argc, char **argv)
