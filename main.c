@@ -151,8 +151,13 @@ int detect(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH],unsigned char erode
         {
           capture(x, y, erosions, eroded_image);
           loc = (y*BMP_WIDTH) + x;
-          printf("Punkt %d,%d bliver til bit nummer %d\n",x,y,loc);
-          centers_image[loc/8] |= (1 << (loc%8));
+          //centers_image[loc/8] |= (1 << (loc%8));
+          centers_image[1] |= (1 << 4);
+          //printf("%d\n",centers_image[0] & (1 << 0) != 0);
+          //printf("forste: %d",centers_image[loc/8] & (1 << (loc%8) != 0));
+          //printf("x,y = (%d,%d)\n",x,y);
+          //printf("men læst som: %d\n",(centers_image[loc/8] & (1 << (loc%8) != 0)));
+
         }
       }
     }
@@ -270,9 +275,9 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
   int yloc;
   for (int x = 0; x < (BMP_WIDTH*BMP_HEIGTH); x++){
       if (centers_image[x/8] & (1 << (x%8)) != 0) {
-        count++;
         xloc = x%BMP_WIDTH;
         yloc = (x-x%BMP_WIDTH)/BMP_WIDTH;
+        printf("kryds i: %d %d\n",xloc,yloc);
         for (int i = -10; i < 10; i++) {
           for (int j = -10; j < 11; j++) {
 
@@ -280,15 +285,12 @@ void cross(unsigned char centers_image[BMP_WIDTH*BMP_HEIGTH], unsigned char orig
             original_image[xloc][yloc+i][0] = 255;
             original_image[xloc][yloc+i][1] = 0;
             original_image[xloc][yloc+i][2] = 0;
-            //Den gemmer de samme punkter virkelig mange gange
-            printf("celle: %d %d\n",xloc,yloc);
           }
 
           if (xloc+i >= 0 && xloc+i < BMP_WIDTH) {
           original_image[xloc+i][yloc][0] = 255;
           original_image[xloc+i][yloc][1] = 0;
           original_image[xloc+i][yloc][2] = 0;
-          printf("celle: %d %d\n",xloc,yloc);
           }
 
           }
@@ -339,6 +341,10 @@ int main(int argc, char **argv)
   {
     erosion(ptr, output_image, eroded_image);
     finish = detect(centers_image,output_image);
+  }
+  
+  for (int i=0; i < 16; i++) {
+    printf("%d. bit = %d\n",i+1,centers_image[i/8] & (1 << (i%8)));
   }
 
   cross(centers_image,input_image);
