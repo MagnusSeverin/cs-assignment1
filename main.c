@@ -7,10 +7,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "cbmp.h"
+#include <time.h>
 
 int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH]);
 void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH]);
 int erosions = 0;
+int dilations = 0;
 int *ptr = &erosions;
 
 //Function to invert pixels of an image (negative)
@@ -60,23 +62,6 @@ void erosion(int *erosions, unsigned char input_image[BMP_WIDTH][BMP_HEIGTH], un
     {
       if (input_image[x][y] > 0)
       {
-        /*
-        for(int i = -1; i<2; i++){
-            if (x + i >= 0 && x + i < BMP_WIDTH)
-          {
-            for(int j = -1; j<2; j++){
-            if (y + j >= 0 && y + j < BMP_HEIGTH) {
-            if (input_image[x + i][y+j][0] == 0)
-            {
-              eroded = 1;
-              break;
-            }
-            }
-            }
-          }
-        }
-        */
-
         for (int i = -1; i < 2; i++)
         {
           if (x + i >= 0 && x + i < BMP_WIDTH)
@@ -145,7 +130,6 @@ int detect(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH], unsigned char ero
 
 int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH])
 {
-
   //int size = 27 - 2 * erosions;
   int size = 19;
 
@@ -184,40 +168,6 @@ int scope(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][BMP_
       }
     }
   }
-
-  /*
-  if (borderPix > 0 && borderPix < 4) {
-    int framePix = 0; 
-    for (int j = -((size - 1) / 2); j <= (size - 1) / 2; j ++)
-  {
-    if (y + j >= 0 && y + j < BMP_HEIGTH)
-    {
-      for (int i = -((size - 1) / 2); i <= (size - 1) / 2; i++)
-      {
-        if (x + i >= 0 && x + i < BMP_WIDTH)
-        {
-          if (eroded_image[x + i][y + j][0] > 0)
-          {
-            framePix++;
-          }
-        }
-      }
-    }
-  }
-  if (borderPix*size < framePix) { 
-    return 1;
-    }
-    else {
-      return 0;
-    }
-  }
-  if (borderPix > 0) {
-    return 0;
-  }
-  else {
-    return 1;
-  }
-  */
   return 1;
 }
 
@@ -244,6 +194,7 @@ void capture(int x, int y, int erosions, unsigned char eroded_image[BMP_WIDTH][B
 void cross(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH], unsigned char original_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS])
 {
   int count = 0;
+
   for (int x = 0; x < BMP_WIDTH; x++)
   {
     for (int y = 0; y < BMP_HEIGTH; y++)
@@ -256,19 +207,19 @@ void cross(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH], unsigned char ori
         {
           for (int j = -10; j < 11; j++)
           {
-
-            if (y + i >= 0 && y + i < BMP_HEIGTH)
+            if ((x - x / BMP_WIDTH) + i >= 0 && (x - x / BMP_WIDTH) + i < BMP_HEIGTH)
             {
-              original_image[x][y + i][0] = 255;
-              original_image[x][y + i][1] = 0;
-              original_image[x][y + i][2] = 0;
+              original_image[x][y][0] = 255;
+              original_image[x][y][1] = 0;
+              original_image[x][y][2] = 0;
             }
 
-            if (x + i >= 0 && x + i < BMP_WIDTH)
+            if ((x % BMP_WIDTH) + i >= 0 && x + i < BMP_WIDTH)
             {
-              original_image[x + i][y][0] = 255;
-              original_image[x + i][y][1] = 0;
-              original_image[x + i][y][2] = 0;
+
+              original_image[x][y][0] = 255;
+              original_image[x][y][1] = 0;
+              original_image[x][y][2] = 0;
             }
           }
         }
@@ -277,33 +228,31 @@ void cross(unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH], unsigned char ori
   }
   printf("%d\n", count);
 }
-
 //Declaring the array to store the image (unsigned char = unsigned 8 bit)
 unsigned char input_image[BMP_WIDTH][BMP_HEIGTH][BMP_CHANNELS];
 unsigned char output_image[BMP_WIDTH][BMP_HEIGTH];
 unsigned char eroded_image[BMP_WIDTH][BMP_HEIGTH];
 unsigned char centers_image[BMP_WIDTH][BMP_HEIGTH];
-
 //Main function
 int main(int argc, char **argv)
 {
+  clock_t start, end;
+  double cpu_time_used;
   //argc counts how may arguments are passed
   //argv[0] is a string with the name of the program
   //argv[1] is the first command line argument (input image)
   //argv[2] is the second command line argument (output image)
 
-  //Checking that 2 arguments are passed
+  //Checking that 2 arguments are passe
   if (argc != 4)
   {
     fprintf(stderr, "Usage: %s <output file path> <output file path>\n", argv[0]);
     exit(1);
   }
-
+  start = clock();
   printf("Example program - 02132 - A1\n");
-
   //Load image from file
   read_bitmap(argv[1], input_image);
-
   //To grey
   toGreyScale(input_image, output_image);
 
@@ -319,12 +268,13 @@ int main(int argc, char **argv)
     erosion(ptr, output_image, eroded_image);
     finish = detect(centers_image, output_image);
   }
-
   cross(centers_image, input_image);
-
+  /* The code that has to be measured. */
   //Save image to file
   write_bitmap(input_image, argv[2]);
-
+  end = clock();
+  cpu_time_used = end - start;
+  printf("Total time: %f ms\n", cpu_time_used * 1000.0 / CLOCKS_PER_SEC);
   printf("Done!\n");
   return 0;
 }
